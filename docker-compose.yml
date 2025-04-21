@@ -1,8 +1,9 @@
 services:
   sftp:
-    image: atmoz/sftp
+    image: drakkan/sftpgo:latest
     volumes: 
-      - ./sftp/upload:/home/foo/upload
+      - ./sftp/data:/srv/sftpgo
+      - ./sftp/home:/var/lib/sftpgo
     ports:
-        - "22:22"
-    command: foo:pass:1001
+      - "8080:8080"
+      - "2022:2022"

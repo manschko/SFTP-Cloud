@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -48,64 +49,66 @@ func NewFileController(sftpHost string, sftpPort int) *FileController {
 }
 
 // getSFTPConnection creates an SFTP connection with the user's credentials
-func (c *FileController) getSFTPConnection(ctx *gin.Context) (*sftp.Connection, error) {
-	username, exists := ctx.Get("username")
-	if !exists {
-		return nil, fmt.Errorf("username not found in context")
-	}
+func (c *FileController) getSFTPConnection() (*sftp.Connection, error) {
+	sftpUser := os.Getenv("SFTP_USER")
+    sftpPassword := os.Getenv("SFTP_PASSWORD")
+    if sftpUser == "" || sftpPassword == "" {
+        return nil, fmt.Errorf("SFTP service account credentials not set in environment")
+    }
+    return sftp.NewConnection(c.SFTPHost, c.SFTPPort, sftpUser, sftpPassword), nil
+}
 
-	// In a real application, you would retrieve the password from a secure store
-	// For this example, we're assuming the password is available somehow
-	// This is a placeholder - you should implement a proper credential management system
-	password := "placeholder" // This would need to be securely stored/retrieved
-
-	return sftp.NewConnection(c.SFTPHost, c.SFTPPort, username.(string), password), nil
+func getUserScopedPath(ctx *gin.Context, relPath string) (string, error) {
+    username, exists := ctx.Get("username")
+    if !exists {
+        return "", fmt.Errorf("username not found in context")
+    }
+    // Ensure relPath is not empty or root
+    if relPath == "" || relPath == "/" {
+        return filepath.Join("/", username.(string)), nil
+    }
+    return filepath.Join("/", username.(string), relPath), nil
 }
 
 // ListFiles lists files in the specified directory
 func (c *FileController) ListFiles(ctx *gin.Context) {
 	path := ctx.Param("path")
-	if path == "" {
-		path = "/"
-	}
-
-	// Get username from context (set by auth middleware)
-	username, exists := ctx.Get("username")
-	if !exists {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "User not authenticated"})
+	scopedPath, err := getUserScopedPath(ctx, path)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	conn, err := c.getSFTPConnection()
 
-	// In a real application, you would retrieve the password from a secure store
-	// This is a placeholder
-	password := "placeholder" // This would need to be securely stored/retrieved
+	if err != nil {
+        ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("SFTP connection error: %v", err)})
+        return
+    }
 
-	conn := sftp.NewConnection(c.SFTPHost, c.SFTPPort, username.(string), password)
 	client, err := conn.Connect()
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("SFTP connection error: %v", err)})
-		return
-	}
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("SFTP connection error: %v", err)})
+        return
+    }
 	defer client.Close()
-
-	files, err := client.ReadDir(path)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to read directory: %v", err)})
-		return
-	}
-
+	// Get username from context (set by auth middleware)
+	files, err := client.ReadDir(scopedPath)
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to read directory: %v", err)})
+        return
+    }
 	var fileInfos []FileInfo
-	for _, file := range files {
-		fileInfos = append(fileInfos, FileInfo{
-			Name:    file.Name(),
-			Size:    file.Size(),
-			IsDir:   file.IsDir(),
-			ModTime: file.ModTime().Format(time.RFC3339),
-			Path:    filepath.Join(path, file.Name()),
-		})
-	}
+    for _, file := range files {
+        fileInfos = append(fileInfos, FileInfo{
+            Name:    file.Name(),
+            Size:    file.Size(),
+            IsDir:   file.IsDir(),
+            ModTime: file.ModTime().Format(time.RFC3339),
+            Path:    filepath.Join(path, file.Name()), // Return relative path to client
+        })
+    }
 
-	ctx.JSON(http.StatusOK, fileInfos)
+    ctx.JSON(http.StatusOK, fileInfos)
 }
 
 // DownloadFile downloads a file from SFTP server
