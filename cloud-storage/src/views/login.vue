@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import TheWelcome from '../components/TheWelcome.vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 

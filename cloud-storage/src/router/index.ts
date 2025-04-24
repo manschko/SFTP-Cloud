@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import Login from '@/views/login.vue'
+import FileBrowser from '@/views/FileBrowser.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -9,6 +10,14 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: {
+        requiresAuth: true // This route requires authentication
+      }
+    },
+    {
+      path: '/files',
+      name: 'files',
+      component: FileBrowser,
       meta: {
         requiresAuth: true // This route requires authentication
       }
