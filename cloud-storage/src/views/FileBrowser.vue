@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-
+const route = useRoute();
+const currentPath2 = route.params.pathMatch
+  ? Array.isArray(route.params.pathMatch)
+    ? '/' + route.params.pathMatch.join('/')
+    : '/' + route.params.pathMatch
+  : '/';
 /*
 import { ref, computed, onMounted } from 'vue';
 import { useDisplay } from 'vuetify';
@@ -64,27 +69,7 @@ const defaultEndpoints: Endpoints = {
 };
 
 // Default file icons
-const fileIcons: Icons = {
-    zip: "folder_zip",
-  rar: "folder_zip",
-  htm: "html",
-  html: "html",
-  js: "javascript",
-  json: "data_object",
-  md: "article",
-  pdf: "picture_as_pdf",
-  png: "image",
-  jpg: "image",
-  jpeg: "image",
-  mp4: "movie",
-  mkv: "movie",
-  avi: "movie",
-  wmv: "movie",
-  mov: "movie",
-  txt: "description",
-  xls: "table_chart",
-  other: "insert_drive_file"
-};
+
 
 // Define props with default values
 const props =null;
@@ -191,13 +176,10 @@ interface Endpoint {
   url: string;
   method: string;
 }
-
-interface Endpoints {
-  list: Endpoint;
-  upload: Endpoint;
-  mkdir: Endpoint;
-  delete: Endpoint;
-}
+import FileWindow from '@/views/FileWindow.vue';
+import Tree from '../components/fileBrowser/Tree.vue';
+import Upload from '../components/fileBrowser/Upload.vue';
+import { useRoute } from 'vue-router';
 const defaultEndpoints: Endpoints = {
   list: { url: "/storage/{storage}/list?path={path}", method: "get" },
   upload: { url: "/storage/{storage}/upload?path={path}", method: "post" },
@@ -231,20 +213,11 @@ const currentPath = ref("/");
           @refreshed="refreshPending = false"
         />
       </v-col>
-      <!--v-divider v-if="tree" vertical />
+      <v-divider v-if="tree" vertical />
       <v-col>
-        <List
-          :path="currentPath"
-          :icons="icons"
-          :endpoints="endpoints"
-          :axios="axiosInstance"
-          :refreshPending="refreshPending"
-          @path-changed="pathChanged"
-          @loading="loadingChanged"
-          @refreshed="refreshPending = false"
-          @file-deleted="refreshPending = true"
-        />
-      </v-col-->
+        <RouterView></RouterView>
+      
+      </v-col>
     </v-row>
     <!--Upload
       v-if="uploadingFiles !== false"

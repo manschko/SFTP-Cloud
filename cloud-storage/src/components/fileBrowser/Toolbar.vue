@@ -130,7 +130,7 @@ async function mkdir(): Promise<void> {
     <v-spacer></v-spacer>
 
     <template v-slot:append>
-      <v-tooltip location="bottom" v-if="pathSegments.length > 0">
+      <!--v-tooltip location="bottom" v-if="pathSegments.length > 0">
         <template v-slot:activator="{ props: tooltipProps }">
           <v-btn icon v-bind="tooltipProps" @click="goUp">
             <v-icon>arrow_upward</v-icon>
@@ -175,7 +175,20 @@ async function mkdir(): Promise<void> {
       <v-btn v-if="path" icon @click="$refs.inputUpload.click()" title="Upload Files">
         <v-icon>upload_file</v-icon>
         <input v-show="false" ref="inputUpload" type="file" multiple @change="addFiles" />
-      </v-btn>
+      </v-btn-->
+      <v-btn-toggle v-model="viewMode" mandatory color="primary" variant="outlined">
+          <v-btn value="list">
+
+            <v-icon v-show="viewMode == 'list'">check</v-icon>
+            <v-icon>menu</v-icon>
+          </v-btn>
+
+          <v-btn value="grid">
+            <v-icon v-show="viewMode == 'grid'">check</v-icon>
+            <v-icon>grid_view</v-icon>
+          </v-btn>
+
+        </v-btn-toggle>
     </template>
   </v-toolbar>
 </template>

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import Login from '@/views/login.vue'
 import FileBrowser from '@/views/FileBrowser.vue'
+import FileWindow from '@/views/FileWindow.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,12 +16,24 @@ const router = createRouter({
       }
     },
     {
-      path: '/files',
+      path: '/files/:pathMatch(.*)*',
       name: 'files',
       component: FileBrowser,
       meta: {
         requiresAuth: true // This route requires authentication
-      }
+      },
+      children: [
+        {
+          path: '', // matches /files
+          name: 'files-root',
+          component: FileWindow, // your main file window component
+        },
+        {
+          path: ':subPath(.*)*', // matches /files/anything
+          name: 'files-sub',
+          component: FileWindow, // or another component for subfolders
+        }
+      ]
     },
     {
       path: '/about',

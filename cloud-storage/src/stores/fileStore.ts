@@ -1,19 +1,11 @@
-import { ref, computed } from 'vue'
-import { defineStore } from 'pinia'
-
-export const useCounterStore = defineStore('counter', () => {
-  const count = ref(0)
-  const doubleCount = computed(() => count.value * 2)
-  function increment() {
-    count.value++
-  }
-
-  return { count, doubleCount, increment }
-})
+import axios from "axios";
+import { defineStore } from "pinia";
+import { useRouter } from "vue-router";
 
 export const useFileStore = defineStore('file',{
   state: () => ({
-    files: [],
+    folders: [] as any[],
+    files: [] as any[],
     loading: false,
     currentPath: '',
     cache: {} as Record<string, any>,
@@ -21,6 +13,7 @@ export const useFileStore = defineStore('file',{
   }),
   getters: {
     getFiles: (state) => state.files,
+    getFolders: (state) => state.folders,
     isLoading: (state) => state.loading,
     getCurrentPath: (state) => state.currentPath,
     getCache: (state) => state.cache,
@@ -32,20 +25,28 @@ export const useFileStore = defineStore('file',{
       this.loading = true
       this.currentPath = path
       this.error = null
+      const router = useRouter()
       
       try {
         // Check if we have cached data
         if (path in this.cache) {
           console.log('Serving from cache:', path)
-          this.files = this.cache[path]
+          this.folders = this.cache[path].filter((item: any) => item.is_dir)
+          this.files = this.cache[path].filter((item: any) => !item.is_dir)
         } else {
           console.log('Fetching from API:', path)
-          const response = await axios.get(`/api/files${path}`)
+          const token = localStorage.getItem('jwt');
+          const headers = token ? { Authorization: `Bearer ${token}`} : {};
+          const response = await axios.get(`/api/files${path}` , { headers });
           // Store in cache
           this.cache[path] = response.data
-          this.files = response.data
+          this.folders = response.data.filter((item: any) => item.is_dir)
+          this.files = response.data.filter((item: any) => !item.is_dir)
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (error.response && error.response.status === 401) {
+          router.push({ name: 'login' })
+        }
         console.error('Error fetching files:', error)
         this.error = error.message || 'Failed to fetch files'
         this.files = []
@@ -54,7 +55,7 @@ export const useFileStore = defineStore('file',{
       }
     },
     
-    clearCache(path = null) {
+    clearCache(path?:string) {
       if (path) {
         delete this.cache[path]
       } else {
@@ -62,15 +63,9 @@ export const useFileStore = defineStore('file',{
       }
     },
     
-    invalidateCache(path) {
-      if (path in this.cache) {
-        delete this.cache[path]
-      }
-    },
-    
     // Optional: Method to refresh data, bypassing cache
-    async refreshFiles(path) {
-      this.invalidateCache(path)
+    async refreshFiles(path: string) {
+      this.clearCache(path)
       await this.fetchFiles(path)
     }
   }
