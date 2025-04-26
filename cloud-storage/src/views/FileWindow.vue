@@ -2,6 +2,7 @@
 import { useFileStore } from '@/stores/fileStore';
 import { computed, ref } from 'vue';
 import { useRoute}  from 'vue-router';
+import {usePreferencesStore} from "@/stores/preferences.ts";
 
 
 const fileStore = useFileStore();
@@ -13,15 +14,13 @@ const currentPath = route.params.pathMatch
   : '/';
 fileStore.fetchFiles(currentPath);
 
-// todo use store with local storage for this
-const viewMode = ref<'list' | 'grid'>('list')
+const preferencesStore = usePreferencesStore()
 
 // Sorting state
-const sortKey = ref<'name' | 'mod_time' | 'size'>('name')
 const sortItems = [
                     {
                         text: 'Name',
-                        value: 'name' 
+                        value: 'name'
                     },
                     {
                         text: 'Größe',
@@ -31,7 +30,6 @@ const sortItems = [
                         text: 'Änderungsdatum',
                         value: 'mod_time'
                     }]
-const sortDir = ref<'asc' | 'desc'>('asc')
 
 const fileIcons: Icons = {
     zip: "folder_zip",
@@ -82,9 +80,13 @@ function formatBytes(bytes: number) {
 const sortedAll = computed(() => {
   return [...fileStore.folders, ...fileStore.files].sort((a, b) => {
     let result = 0
-    if (a[sortKey.value] < b[sortKey.value]) result = -1
-    if (a[sortKey.value] > b[sortKey.value]) result = 1
-    return sortDir.value === 'asc' ? result : -result
+    const sortBy = preferencesStore.getSortBy();
+    const sortOrder = preferencesStore.getSortOrder();
+
+    if (a[sortBy] < b[sortBy]) result = -1;
+    if (a[sortBy] > b[sortBy]) result = 1;
+
+    return sortOrder === 'asc' ? result : -result
   })
 })
 
@@ -92,11 +94,11 @@ const sortedFolders = computed(() => sortedAll.value.filter(item => item.is_dir)
 const sortedFiles = computed(() => sortedAll.value.filter(item => !item.is_dir))
 
 function changeSort(key: 'name' | 'mod_time' | 'size') {
-  if (sortKey.value === key) {
-    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+  if (preferencesStore.getSortBy() === key) {
+    preferencesStore.toggleSortOrder();
   } else {
-    sortKey.value = key
-    sortDir.value = 'asc'
+    preferencesStore.setSortOrder('asc');
+    preferencesStore.setSortBy(key);
   }
 }
 
@@ -120,6 +122,10 @@ function onDrop(e: DragEvent) {
   isDragging.value = false
   // handle files here, e.dataTransfer.files
 }
+const sortKey = computed({
+  get: () => preferencesStore.getSortBy(),
+  set: (value) => preferencesStore.setSortBy(value as 'name' | 'mod_time' | 'size'),
+});
 </script>
 <template>
     <v-card flat tile min-height="380" class="d-flex flex-column ">
@@ -148,30 +154,30 @@ function onDrop(e: DragEvent) {
                     <div>Dateien zum Hochladen ablegen</div>
                 </div>
             </div>
-            <v-table v-if="viewMode == 'list'">
+            <v-table v-if="preferencesStore.getViewMode() == 'list'">
                 <thead>
                 <tr>
                     <th class="text-left">
                     <v-btn variant="text" @click="() => changeSort('name')" class="sort-btn">
                     Name
-                    <v-icon :style="{ opacity: sortKey === 'name' ? 1 : 0 }">
-                        {{ sortDir === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                    <v-icon :style="{ opacity: preferencesStore.getSortBy() === 'name' ? 1 : 0 }">
+                        {{ preferencesStore.getSortOrder() === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down' }}
                     </v-icon>
                     </v-btn>
                     </th>
                     <th class="text-left">
                     <v-btn variant="text" @click="() => changeSort('mod_time')" class="sort-btn">
                     modified
-                    <v-icon :style="{ opacity: sortKey === 'mod_time' ? 1 : 0 }">
-                        {{ sortDir === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                    <v-icon :style="{ opacity: preferencesStore.getSortBy() === 'mod_time' ? 1 : 0 }">
+                        {{ preferencesStore.getSortOrder() === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down' }}
                     </v-icon>
                     </v-btn>
                     </th>
                     <th class="text-left">
                     <v-btn variant="text" @click="() => changeSort('size')" class="sort-btn">
                     size
-                    <v-icon :style="{ opacity: sortKey === 'size' ? 1 : 0 }">
-                        {{ sortDir === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                    <v-icon :style="{ opacity: preferencesStore.getSortBy() === 'size' ? 1 : 0 }">
+                        {{ preferencesStore.getSortOrder() === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down' }}
                     </v-icon>
                     </v-btn>
                     </th>
@@ -190,10 +196,10 @@ function onDrop(e: DragEvent) {
             </v-table>
             <v-card-text v-else>
                 <div class="d-flex justify-end position-absolute top-0 right-0 p-2 sort-container">
-                    <v-btn 
-                    variant="text" 
-                    :icon="sortDir ==='asc'? 'arrow_upward': 'arrow_downward'" 
-                    @click="() => changeSort(sortKey)"
+                    <v-btn
+                    variant="text"
+                    :icon="preferencesStore.getSortOrder() ==='asc'? 'arrow_upward': 'arrow_downward'"
+                    @click="() => preferencesStore.toggleSortOrder()"
                     style="height:2.5rem;"
                     >
 
@@ -201,15 +207,15 @@ function onDrop(e: DragEvent) {
                     <v-select
                     v-model="sortKey"
                     :items="sortItems"
-                    item-title="text"  
+                    item-title="text"
                     item-value="value"
                     class="sort-select"
                     density="compact"
                     ></v-select>
                 </div>
-                
+
                 <p class="text-subtitle-1 mb-2 mt-2">Ordner</p>
-                <v-row 
+                <v-row
                 align="start">
                     <v-col
                     cols="12"
@@ -233,7 +239,7 @@ function onDrop(e: DragEvent) {
                     </v-col>
                 </v-row>
                 <p class="text-subtitle-1 mb-2 mt-2">Dateien</p>
-                <v-row 
+                <v-row
                 align="start">
                     <v-col
                     cols="12"
@@ -262,7 +268,7 @@ function onDrop(e: DragEvent) {
                     </v-col>
                 </v-row>
             </v-card-text>
-    
+
         </div>
         </v-card-text>
         <v-card-text

@@ -1,18 +1,18 @@
 package main
 
 import (
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"log"
 	"time"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	err := godotenv.Load("./../.env") // Load the .env file
-    if err != nil {
-        log.Println(".env not found")
-    }
+	if err != nil {
+		log.Println(".env not found")
+	}
 
 	// Load configuration
 	if err := LoadConfig(); err != nil {

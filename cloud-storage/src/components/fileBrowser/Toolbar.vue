@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import {computed, ref} from 'vue';
+import {usePreferencesStore} from "@/stores/preferences.ts";
 
 interface Storage {
   code: string;
@@ -17,6 +18,7 @@ interface Endpoints {
     url: string;
     method?: string;
   };
+
   [key: string]: any;
 }
 
@@ -40,6 +42,7 @@ const newFolderPopper = ref(false);
 const newFolderName = ref('');
 
 const pathSegments: PathSegment[] = [{name: "folder1", path: "/folder1"}]
+
 /*const pathSegments = computed((): PathSegment[] => {
   let path = '/';
   const isFolder = props.path[props.path.length - 1] === '/';
@@ -87,7 +90,7 @@ function addFiles(event: Event): void {
 
 async function mkdir(): Promise<void> {
   emit('loading', true);
-  
+
   let url = props.endopints.mkdir.url
     .replace(new RegExp("{storage}", "g"), props.storage)
     .replace(new RegExp("{path}", "g"), props.path + newFolderName.value);
@@ -103,6 +106,11 @@ async function mkdir(): Promise<void> {
   newFolderName.value = '';
   emit('loading', false);
 }
+const preferencesStore = usePreferencesStore();
+const viewMode = computed({
+  get: () => preferencesStore.getViewMode(),
+  set: (value) => preferencesStore.setViewMode(value as 'grid' | 'list'),
+});
 </script>
 
 <template>
@@ -114,7 +122,7 @@ async function mkdir(): Promise<void> {
         @click="changePath('/')"
       >
         <v-icon class="mr-2">{{ 'home'/*storageObject.icon*/ }}</v-icon>
-        {{  'test' /*storageObject.name*/ }}
+        {{ 'test' /*storageObject.name*/ }}
       </v-btn>
       <template v-for="(segment, index) in pathSegments" :key="index">
         <v-icon>chevron_right</v-icon>
@@ -176,19 +184,19 @@ async function mkdir(): Promise<void> {
         <v-icon>upload_file</v-icon>
         <input v-show="false" ref="inputUpload" type="file" multiple @change="addFiles" />
       </v-btn-->
-      <v-btn-toggle v-model="viewMode" mandatory color="primary" variant="outlined">
-          <v-btn value="list">
+      <v-btn-toggle rounded="xl" v-model="viewMode" mandatory color="primary" variant="outlined" density="compact">
+        <v-btn value="list">
 
-            <v-icon v-show="viewMode == 'list'">check</v-icon>
-            <v-icon>menu</v-icon>
-          </v-btn>
+          <v-icon v-show="viewMode == 'list'">check</v-icon>
+          <v-icon>menu</v-icon>
+        </v-btn>
 
-          <v-btn value="grid">
-            <v-icon v-show="viewMode == 'grid'">check</v-icon>
-            <v-icon>grid_view</v-icon>
-          </v-btn>
+        <v-btn value="grid">
+          <v-icon v-show="viewMode == 'grid'">check</v-icon>
+          <v-icon>grid_view</v-icon>
+        </v-btn>
 
-        </v-btn-toggle>
+      </v-btn-toggle>
     </template>
   </v-toolbar>
 </template>
