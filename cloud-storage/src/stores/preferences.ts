@@ -4,6 +4,7 @@ export type Preferences = {
   viewMode: string;
   sortOrder: string;
   sortBy: string;
+  name: string
 }
 
 export const usePreferencesStore = defineStore('preferences', {
@@ -41,6 +42,13 @@ export const usePreferencesStore = defineStore('preferences', {
     },
     getSortBy() {
       return this.preferences.sortBy
+    },
+    setName(name: string) {
+      this.preferences.name = name
+      localStorage.setItem('preferences', JSON.stringify(this.preferences))
+    },
+    getName() {
+      return this.preferences.name
     },
   }
 });

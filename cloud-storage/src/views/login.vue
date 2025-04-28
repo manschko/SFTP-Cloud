@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-
+import {usePreferencesStore} from "@/stores/preferences.ts";
+const preferencesStore = usePreferencesStore()
 const username = ref('')
 const password = ref('')
 const visible = ref(false)
@@ -21,7 +22,8 @@ const login = async () => {
         if (!res.ok) throw new Error('Login failed')
         const data = await res.json()
         localStorage.setItem('jwt', data.token)
-        router.push({ name: 'Home' }) // Change 'Home' to your main route name
+        preferencesStore.setName(username.value)
+        router.push({ name: 'files' }) // Change 'Home' to your main route name
     } catch (e: any) {
         error.value = e.message || 'Login failed'
     } finally {
@@ -37,13 +39,15 @@ const login = async () => {
                 <h1>
                     Login into Cloud Storage
                 </h1>
+              <v-form>
                 <v-text-field v-model="username" label="Username" variant="outlined"></v-text-field>
                 <v-text-field v-model="password" :append-inner-icon="visible ? 'visibility_off' : 'visibility'"
                     :type="visible ? 'text' : 'password'" label="Password" variant="outlined"
                     @click:append-inner="visible = !visible"></v-text-field>
-                <v-btn variant="tonal" :loading="pending" :disabled="pending" @click="login">
+                <v-btn variant="tonal" :loading="pending" :disabled="pending" @click="login" type="submit">
                     Login
                 </v-btn>
+              </v-form>
             </v-container>
         </v-col>
     </v-row>
