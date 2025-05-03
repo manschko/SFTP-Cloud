@@ -2,7 +2,9 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {usePreferencesStore} from "@/stores/preferences.ts";
+import { useFileStore } from '@/stores/fileStore';
 const preferencesStore = usePreferencesStore()
+const fileStore = useFileStore()
 const username = ref('')
 const password = ref('')
 const visible = ref(false)
@@ -23,7 +25,8 @@ const login = async () => {
         const data = await res.json()
         localStorage.setItem('jwt', data.token)
         preferencesStore.setName(username.value)
-        router.push({ name: 'files' }) // Change 'Home' to your main route name
+        fileStore.fetchFiles("/");
+        router.push({ name: 'files-root' })
     } catch (e: any) {
         error.value = e.message || 'Login failed'
     } finally {
