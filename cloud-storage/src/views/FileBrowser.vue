@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Toolbar from '@/components/fileBrowser/Toolbar.vue';
+import Toolbar from '@/components/Toolbar.vue';
 import { useFileStore } from '@/stores/fileStore';
 
 const fileStore = useFileStore();

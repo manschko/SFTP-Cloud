@@ -9,7 +9,8 @@ export const useFileStore = defineStore('file',{
     loading: false,
     currentPath: '',
     cache: {} as Record<string, any>,
-    error: null
+    error: null,
+    selectedItems: [] as string[]
   }),
   getters: {
     getFiles: (state) => state.files,
@@ -17,7 +18,8 @@ export const useFileStore = defineStore('file',{
     isLoading: (state) => state.loading,
     getCurrentPath: (state) => state.currentPath,
     getCache: (state) => state.cache,
-    getError: (state) => state.error
+    getError: (state) => state.error,
+    getSelectedItems: (state) => state.selectedItems,
   },
 
   actions: {
@@ -70,6 +72,9 @@ export const useFileStore = defineStore('file',{
       } else {
         this.cache = {}
       }
+    },
+    isItemSelected(item: any): boolean {
+      return this.selectedItems.includes(item.name);
     },
 
     // Optional: Method to refresh data, bypassing cache

@@ -3,10 +3,9 @@ import {useFileStore} from '@/stores/fileStore';
 import {computed, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {usePreferencesStore} from "@/stores/preferences.ts";
+import listView from '@/components/fileWindows/listView.vue';
+import { formatBytes, formatDate , getFileIcon} from '@/components/fileBrowser/util';
 
-interface Icons {
-  [key: string]: string;
-}
 
 const fileStore = useFileStore();
 const route = useRoute();
@@ -42,54 +41,6 @@ const sortItems = [
     text: 'Änderungsdatum',
     value: 'mod_time'
   }]
-
-const fileIcons: Icons = {
-  zip: "folder_zip",
-  rar: "folder_zip",
-  '7z': "folder_zip",
-  htm: "html",
-  html: "html",
-  js: "javascript",
-  json: "data_object",
-  md: "article",
-  pdf: "picture_as_pdf",
-  png: "image",
-  jpg: "image",
-  jpeg: "image",
-  webp: "image",
-  mp4: "movie",
-  mkv: "movie",
-  avi: "movie",
-  wmv: "movie",
-  mov: "movie",
-  txt: "description",
-  xls: "table_chart",
-  other: "insert_drive_file"
-};
-
-function getFileIcon(fileName: string) {
-  const ext = fileName.split('.').pop()
-  if (!ext) return fileIcons['other']
-  return fileIcons[ext] || fileIcons['other']
-}
-
-function formatDate(dateStr: string) {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  })
-}
-
-// Format bytes
-function formatBytes(bytes: number) {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
 
 const sortedAll = computed(() => {
   return [...fileStore.folders, ...fileStore.files].sort((a, b) => {
@@ -214,57 +165,7 @@ watch(() => currentPath, () => {
             <div>Dateien zum Hochladen ablegen</div>
           </div>
         </div>
-        <v-table v-if="preferencesStore.getViewMode() == 'list'">
-          <thead>
-          <tr>
-            <th class="text-left" scope="col">
-              <v-btn variant="text" @click="() => changeSort('name')" class="sort-btn">
-                Name
-                <v-icon :style="{ opacity: preferencesStore.getSortBy() === 'name' ? 1 : 0 }">
-                  {{
-                    preferencesStore.getSortOrder() === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down'
-                  }}
-                </v-icon>
-              </v-btn>
-            </th>
-            <th class="text-left" scope="col">
-              <v-btn variant="text" @click="() => changeSort('mod_time')" class="sort-btn">
-                modified
-                <v-icon :style="{ opacity: preferencesStore.getSortBy() === 'mod_time' ? 1 : 0 }">
-                  {{
-                    preferencesStore.getSortOrder() === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down'
-                  }}
-                </v-icon>
-              </v-btn>
-            </th>
-            <th class="text-left" scope="col">
-              <v-btn variant="text" @click="() => changeSort('size')" class="sort-btn">
-                size
-                <v-icon :style="{ opacity: preferencesStore.getSortBy() === 'size' ? 1 : 0 }">
-                  {{
-                    preferencesStore.getSortOrder() === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down'
-                  }}
-                </v-icon>
-              </v-btn>
-            </th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr
-            v-for="item in sortedAll"
-            :key="item.name"
-            @click="(event) => toggleItemSelection(item, event)"
-          >
-            <td>
-              <v-icon class="icon-space">{{ item.is_dir ? 'folder' : getFileIcon(item.name) }}
-              </v-icon>
-              {{ item.name }}
-            </td>
-            <td>{{ formatDate(item.mod_time) }}</td>
-            <td>{{ item.is_dir ? '' : formatBytes(item.size) }}</td>
-          </tr>
-          </tbody>
-        </v-table>
+        <listView v-if="preferencesStore.getViewMode() == 'list'"></listView>
         <v-card-text v-else>
           <div class="d-flex justify-end position-absolute top-0 right-0 p-2 sort-container">
             <v-btn
