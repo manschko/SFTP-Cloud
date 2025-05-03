@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
 import Login from '@/views/login.vue'
 import FileBrowser from '@/views/FileBrowser.vue'
 import FileWindow from '@/views/FileWindow.vue'
@@ -9,11 +8,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
-      meta: {
-        requiresAuth: true // This route requires authentication
-      }
+      redirect: '/files',
     },
     {
       path: '/files/:pathMatch(.*)*',
@@ -34,14 +29,6 @@ const router = createRouter({
           component: FileWindow, // or another component for subfolders
         }
       ]
-    },
-    {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
     },
     {
       path: '/login',

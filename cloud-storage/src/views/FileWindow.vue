@@ -12,11 +12,11 @@ const fileStore = useFileStore();
 const route = useRoute();
 const router = useRouter();
 const currentPath = computed(() => {
-  return route.params.pathMatch
-    ? Array.isArray(route.params.pathMatch)
-      ? '/' + route.params.pathMatch.join('/')
-      : '/' + route.params.pathMatch
-    : '/';
+  const pathMatch = route.params.pathMatch;
+  if (pathMatch) {
+    return Array.isArray(pathMatch) ? '/' + pathMatch.join('/') : '/' + pathMatch;
+  }
+  return '/';
 });
 
 // Add a watcher to fetch files when the path changes
@@ -69,6 +69,7 @@ const fileIcons: Icons = {
 
 function getFileIcon(fileName: string) {
   const ext = fileName.split('.').pop()
+  if (!ext) return fileIcons['other']
   return fileIcons[ext] || fileIcons['other']
 }
 
@@ -178,6 +179,7 @@ function toggleItemSelection(item: any, event: MouseEvent) {
     selectedItems.value = newSelection;
   }
   else if (item.is_dir && isItemSelected(item)) {
+    //double click to open folder
     const newPath = currentPath.value + (currentPath.value.endsWith('/') ? '' : '/') + item.name;
     router.push({ path: `/files${newPath}` });
     selectedItems.value = selectedItems.value.filter(id => id !== itemId);
@@ -187,15 +189,6 @@ function toggleItemSelection(item: any, event: MouseEvent) {
   
 
 }
-
-// Handle double-click for folder navigation
-/*function handleDoubleClick(item: any) {
-  if (item.is_dir) {
-    const newPath = currentPath.value + (currentPath.value.endsWith('/') ? '' : '/') + item.name;
-    router.push({ path: `/files${newPath}` });
-  }
-  // You could add file handling logic here (preview, download, etc.)
-}*/
 
 // Check if an item is selected
 function isItemSelected(item: any): boolean {
@@ -209,19 +202,6 @@ watch(() => currentPath, () => {
 </script>
 <template>
   <v-card flat tile min-height="380" class="d-flex flex-column ">
-    <!--v-btn-toggle v-model="viewMode" mandatory color="primary" variant="outlined">
-      <v-btn value="list">
-
-        <v-icon v-show="viewMode == 'list'">check</v-icon>
-        <v-icon>menu</v-icon>
-      </v-btn>
-
-      <v-btn value="grid">
-        <v-icon v-show="viewMode == 'grid'">check</v-icon>
-        <v-icon>grid_view</v-icon>
-      </v-btn>
-
-    </v-btn-toggle-->
     <v-card-text v-if="fileStore.files.length || fileStore.folders.length" class="grow">
       <div
         class="drop-container"
@@ -237,7 +217,7 @@ watch(() => currentPath, () => {
         <v-table v-if="preferencesStore.getViewMode() == 'list'">
           <thead>
           <tr>
-            <th class="text-left">
+            <th class="text-left" scope="col">
               <v-btn variant="text" @click="() => changeSort('name')" class="sort-btn">
                 Name
                 <v-icon :style="{ opacity: preferencesStore.getSortBy() === 'name' ? 1 : 0 }">
@@ -247,7 +227,7 @@ watch(() => currentPath, () => {
                 </v-icon>
               </v-btn>
             </th>
-            <th class="text-left">
+            <th class="text-left" scope="col">
               <v-btn variant="text" @click="() => changeSort('mod_time')" class="sort-btn">
                 modified
                 <v-icon :style="{ opacity: preferencesStore.getSortBy() === 'mod_time' ? 1 : 0 }">
@@ -257,7 +237,7 @@ watch(() => currentPath, () => {
                 </v-icon>
               </v-btn>
             </th>
-            <th class="text-left">
+            <th class="text-left" scope="col">
               <v-btn variant="text" @click="() => changeSort('size')" class="sort-btn">
                 size
                 <v-icon :style="{ opacity: preferencesStore.getSortBy() === 'size' ? 1 : 0 }">
@@ -274,7 +254,6 @@ watch(() => currentPath, () => {
             v-for="item in sortedAll"
             :key="item.name"
             @click="(event) => toggleItemSelection(item, event)"
-            @dblclick="() => handleDoubleClick(item)"
           >
             <td>
               <v-icon class="icon-space">{{ item.is_dir ? 'folder' : getFileIcon(item.name) }}
@@ -322,8 +301,7 @@ watch(() => currentPath, () => {
                 ripple
                 variant="tonal"
                 :class="{ 'selection-indicator': isItemSelected(folder), 'mb-2': true }"
-                @click="(event) => toggleItemSelection(folder, event)"
-                @dblclick="() => handleDoubleClick(folder)">
+                @click="(event) => toggleItemSelection(folder, event)">
                 <v-card-title class="d-flex align-center">
                   <v-icon class="mr-2">folder</v-icon>
                   <span class="folder-title text-truncate">{{ folder.name }}</span>
@@ -348,7 +326,6 @@ watch(() => currentPath, () => {
                 ripple
                 :class="{ 'selection-indicator': isItemSelected(file), 'mb-2': true }"
                 @click="(event) => toggleItemSelection(file, event)"
-                @dblclick="() => handleDoubleClick(file)"
               >
                 <v-card-title class="d-flex align-center">
                   <v-icon large class="mr-4 file-icon">{{ getFileIcon(file.name) }}</v-icon>
