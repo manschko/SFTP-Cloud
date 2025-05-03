@@ -177,20 +177,25 @@ function toggleItemSelection(item: any, event: MouseEvent) {
     }
     selectedItems.value = newSelection;
   }
-  // Regular click - select only this item
-  else {
+  else if (item.is_dir && isItemSelected(item)) {
+    const newPath = currentPath.value + (currentPath.value.endsWith('/') ? '' : '/') + item.name;
+    router.push({ path: `/files${newPath}` });
+    selectedItems.value = selectedItems.value.filter(id => id !== itemId);
+  } else {
     selectedItems.value = [itemId];
   }
+  
+
 }
 
 // Handle double-click for folder navigation
-function handleDoubleClick(item: any) {
+/*function handleDoubleClick(item: any) {
   if (item.is_dir) {
     const newPath = currentPath.value + (currentPath.value.endsWith('/') ? '' : '/') + item.name;
     router.push({ path: `/files${newPath}` });
   }
   // You could add file handling logic here (preview, download, etc.)
-}
+}*/
 
 // Check if an item is selected
 function isItemSelected(item: any): boolean {
