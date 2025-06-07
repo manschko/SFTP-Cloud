@@ -9,8 +9,8 @@ export const useFileStore = defineStore('file',{
     loading: false,
     currentPath: '',
     cache: {} as Record<string, any>,
-    error: null,
-    selectedItems: [] as string[]
+    error: null as number | null,
+    selectedItems: [] as string[],
   }),
   getters: {
     getFiles: (state) => state.files,
@@ -26,7 +26,6 @@ export const useFileStore = defineStore('file',{
     async fetchFiles(path: string) {
       this.loading = true
       this.currentPath = path
-      const router = useRouter()
 
       try {
         // Check if we have cached data
@@ -58,11 +57,11 @@ export const useFileStore = defineStore('file',{
         this.loading = false
       } catch (error: any) {
         if (error.response && error.response.status === 401) {
-          router.push({name: 'login'})
+          localStorage.removeItem('jwt')
         }
-        console.error('Error fetching files:', error)
+        this.error = error.response.status
         this.loading = false
-        throw error
+        throw error; 
       }
     },
 

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import {useFileStore} from '@/stores/fileStore';
-import {computed, ref, watch} from 'vue';
-import {useRoute, useRouter} from 'vue-router';
-import {usePreferencesStore} from "@/stores/preferences.ts";
+import { useFileStore } from '@/stores/fileStore';
+import { computed, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { usePreferencesStore } from "@/stores/preferences.ts";
 import listView from '@/components/fileWindows/listView.vue';
-import { formatBytes, formatDate , getFileIcon} from '@/components/fileBrowser/util';
+import { formatBytes, formatDate, getFileIcon } from '@/components/fileBrowser/util';
 
 
 const fileStore = useFileStore();
@@ -20,9 +20,9 @@ const currentPath = computed(() => {
 
 // Add a watcher to fetch files when the path changes
 watch(currentPath, (newPath) => {
-  fileStore.fetchFiles(newPath).catch(() => {
-    window.history.back();
-  });
+    fileStore.fetchFiles(newPath).catch(() => {
+      router.push({ path: '/login' })
+    });
 }, { immediate: true });
 
 const preferencesStore = usePreferencesStore()
@@ -137,7 +137,7 @@ function toggleItemSelection(item: any, event: MouseEvent) {
   } else {
     selectedItems.value = [itemId];
   }
-  
+
 
 }
 
@@ -154,11 +154,7 @@ watch(() => currentPath, () => {
 <template>
   <v-card flat tile min-height="380" class="d-flex flex-column ">
     <v-card-text v-if="fileStore.files.length || fileStore.folders.length" class="grow">
-      <div
-        class="drop-container"
-        @dragover="onDragOver"
-        @dragleave="onDragLeave"
-        @drop="onDrop">
+      <div class="drop-container" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
         <div v-if="isDragging" class="drop-overlay">
           <div class="drop-message">
             <v-icon large color="primary" class="upload-drag-icon">cloud_upload</v-icon>
@@ -168,40 +164,18 @@ watch(() => currentPath, () => {
         <listView v-if="preferencesStore.getViewMode() == 'list'"></listView>
         <v-card-text v-else>
           <div class="d-flex justify-end position-absolute top-0 right-0 p-2 sort-container">
-            <v-btn
-              variant="text"
-              :icon="preferencesStore.getSortOrder() ==='asc'? 'arrow_upward': 'arrow_downward'"
-              @click="() => preferencesStore.toggleSortOrder()"
-              style="height:2.5rem;"
-            >
+            <v-btn variant="text" :icon="preferencesStore.getSortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward'"
+              @click="() => preferencesStore.toggleSortOrder()" style="height:2.5rem;">
 
             </v-btn>
-            <v-select
-              v-model="sortKey"
-              :items="sortItems"
-              item-title="text"
-              item-value="value"
-              class="sort-select"
-              density="compact"
-            ></v-select>
+            <v-select v-model="sortKey" :items="sortItems" item-title="text" item-value="value" class="sort-select"
+              density="compact"></v-select>
           </div>
 
           <p v-if="fileStore.folders.length" class="text-subtitle-1 mb-2 mt-2">Ordner</p>
-          <v-row
-            align="start">
-            <v-col
-              cols="12"
-              sm="4"
-              md="3"
-              lg="2"
-              xl="1"
-              v-for="folder in sortedFolders"
-              :key="folder.name"
-            >
-              <v-card
-                ripple
-                variant="tonal"
-                :class="{ 'selection-indicator': isItemSelected(folder), 'mb-2': true }"
+          <v-row align="start">
+            <v-col cols="12" sm="4" md="3" lg="2" xl="1" v-for="folder in sortedFolders" :key="folder.name">
+              <v-card ripple variant="tonal" :class="{ 'selection-indicator': isItemSelected(folder), 'mb-2': true }"
                 @click="(event) => toggleItemSelection(folder, event)">
                 <v-card-title class="d-flex align-center">
                   <v-icon class="mr-2">folder</v-icon>
@@ -211,23 +185,10 @@ watch(() => currentPath, () => {
             </v-col>
           </v-row>
           <p v-if="fileStore.files.length" class="text-subtitle-1 mb-2 mt-2">Dateien</p>
-          <v-row
-            align="start">
-            <v-col
-              cols="12"
-              sm="4"
-              md="3"
-              lg="2"
-              xl="1"
-              v-for="file in sortedFiles"
-              :key="file.name"
-            >
-              <v-card
-                variant="tonal"
-                ripple
-                :class="{ 'selection-indicator': isItemSelected(file), 'mb-2': true }"
-                @click="(event) => toggleItemSelection(file, event)"
-              >
+          <v-row align="start">
+            <v-col cols="12" sm="4" md="3" lg="2" xl="1" v-for="file in sortedFiles" :key="file.name">
+              <v-card variant="tonal" ripple :class="{ 'selection-indicator': isItemSelected(file), 'mb-2': true }"
+                @click="(event) => toggleItemSelection(file, event)">
                 <v-card-title class="d-flex align-center">
                   <v-icon large class="mr-4 file-icon">{{ getFileIcon(file.name) }}</v-icon>
                   <div class="d-flex flex-column">
@@ -243,10 +204,7 @@ watch(() => currentPath, () => {
 
       </div>
     </v-card-text>
-    <v-card-text
-      v-else
-      class="grow d-flex justify-center align-center grey--text py-5"
-    >The folder is empty
+    <v-card-text v-else class="grow d-flex justify-center align-center grey--text py-5">The folder is empty
     </v-card-text>
   </v-card>
 </template>
@@ -265,7 +223,8 @@ watch(() => currentPath, () => {
 }
 
 .folder-title {
-  max-width: calc(100% - 30px); /* Adjust as needed */
+  max-width: calc(100% - 30px);
+  /* Adjust as needed */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -318,11 +277,14 @@ watch(() => currentPath, () => {
 
 @keyframes bounce {
 
-  0%, 50%, 100% {
+  0%,
+  50%,
+  100% {
     transform: translateY(0);
   }
 
-  25%, 75% {
+  25%,
+  75% {
     transform: translateY(5px);
   }
 
@@ -331,9 +293,10 @@ watch(() => currentPath, () => {
 .v-table__selected {
   background-color: rgb(var(--v-theme-primary), 0.1) !important;
 }
-.selection-indicator{
+
+.selection-indicator {
   color: rgb(var(--v-theme-primary)) !important;
-  background-color: rgba(var(--v-theme-primary), calc((var(--v-activated-opacity) + var(--v-hover-opacity)) * var(--v-theme-overlay-multiplier)))!important;
+  background-color: rgba(var(--v-theme-primary), calc((var(--v-activated-opacity) + var(--v-hover-opacity)) * var(--v-theme-overlay-multiplier))) !important;
 }
 </style>
 <style lang="scss">
