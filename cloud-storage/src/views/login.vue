@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import {usePreferencesStore} from "@/stores/preferences.ts";
+import { usePreferencesStore } from "@/stores/preferences.ts";
 import { useFileStore } from '@/stores/fileStore';
 const preferencesStore = usePreferencesStore()
 const fileStore = useFileStore()
@@ -28,7 +28,8 @@ const login = async () => {
         fileStore.fetchFiles("/");
         router.push({ name: 'files-root' })
     } catch (e: any) {
-        error.value = e.message || 'Login failed'
+        console.error(e)
+        error.value = 'Anmeldung fehlgeschlagen bitte überprüfen sie ihre Eingaben'
     } finally {
         pending.value = false
     }
@@ -42,15 +43,22 @@ const login = async () => {
                 <h1>
                     Login into Cloud Storage
                 </h1>
-              <v-form>
-                <v-text-field v-model="username" label="Username" variant="outlined"></v-text-field>
-                <v-text-field v-model="password" :append-inner-icon="visible ? 'visibility_off' : 'visibility'"
-                    :type="visible ? 'text' : 'password'" label="Password" variant="outlined"
-                    @click:append-inner="visible = !visible"></v-text-field>
-                <v-btn variant="tonal" :loading="pending" :disabled="pending" @click="login" type="submit">
-                    Login
-                </v-btn>
-              </v-form>
+                <v-form>
+                    <v-text-field v-model="username" :error="!!error" label="Username"
+                        variant="outlined"></v-text-field>
+                    <v-text-field v-model="password" :error="!!error"
+                        :append-inner-icon="visible ? 'visibility_off' : 'visibility'"
+                        :type="visible ? 'text' : 'password'" label="Password" variant="outlined"
+                        @click:append-inner="visible = !visible"></v-text-field>
+                    <v-slide-y-transition>
+                        <v-alert v-if="error" type="error" class="mb-4" density="compact" border="start">
+                            {{ error }}
+                        </v-alert>
+                    </v-slide-y-transition>
+                    <v-btn variant="tonal" :loading="pending" :disabled="pending" @click="login" type="submit">
+                        Login
+                    </v-btn>
+                </v-form>
             </v-container>
         </v-col>
     </v-row>
